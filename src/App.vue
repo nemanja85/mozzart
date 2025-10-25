@@ -2,6 +2,7 @@
 import FilterSearch from './components/FilterSearch.vue'
 import GameCard from './components/GameCard.vue'
 import Nav from './components/Nav.vue'
+
 </script>
 
 <template>
