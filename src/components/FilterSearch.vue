@@ -1,4 +1,16 @@
-<script lang="ts"></script>
+<script setup lang="ts">
+import { useMatchesStore, type SortBy } from '@/stores/app'
+import { storeToRefs } from 'pinia'
+
+const store = useMatchesStore()
+const { searchTerm, selectedLeague, sortBy, availableLeagues } = storeToRefs(store)
+
+const sortOptions: { value: SortBy; label: string }[] = [
+  { value: 'default', label: 'Podrazumevano' },
+  { value: 'time', label: 'Vremenu' },
+  { value: 'alphabetical', label: 'Timu' },
+]
+</script>
 
 <template>
   <div
@@ -17,87 +29,41 @@
             aria-hidden="true"
           >
             <path d="m21 21-4.34-4.34"></path>
-            <circle cx="11" cy="11" r="8"></circle></svg
-          ><input
+            <circle cx="11" cy="11" r="8"></circle>
+          </svg>
+          <input
             type="text"
-            class="file:text-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-            placeholder="Search teams or leagues..."
-            value=""
+            :value="searchTerm"
+            @input="store.setSearchTerm(($event.target as HTMLInputElement).value)"
+            placeholder="Pretraži tim..."
+            class="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base transition-[color,box-shadow] outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
           />
         </div>
       </div>
-      <div>
-        <button
-          type="button"
-          role="combobox"
-          aria-controls="radix-:r0:"
-          aria-expanded="false"
-          aria-autocomplete="none"
-          class="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 bg-slate-800 border-slate-700 text-white"
+      <select
+        :value="selectedLeague"
+        @change="store.setSelectedLeague(($event.target as HTMLSelectElement).value)"
+        class="p-2 border bg-slate-800 border-slate-700 placeholder:text-slate-500 text-white rounded-md"
+      >
+        <option value="all">Odaberi Ligu</option>
+        <option
+          v-for="league in availableLeagues"
+          :key="league"
+          :value="league"
+          v-if="league !== 'all'"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            class="lucide lucide-funnel h-4 w-4 mr-2 text-slate-400"
-            aria-hidden="true"
-          >
-            <path
-              d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"
-            ></path></svg
-          ><span style="pointer-events: none">All Sports</span
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            class="lucide lucide-chevron-down size-4 opacity-50"
-            aria-hidden="true"
-          >
-            <path d="m6 9 6 6 6-6"></path>
-          </svg>
-        </button>
-      </div>
-      <div>
-        <button
-          type="button"
-          role="combobox"
-          aria-controls="radix-:r1:"
-          aria-expanded="false"
-          aria-autocomplete="none"
-          dir="ltr"
-          class="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 bg-slate-800 border-slate-700 text-white"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            class="lucide lucide-arrow-up-down h-4 w-4 mr-2 text-slate-400"
-            aria-hidden="true"
-          >
-            <path d="m21 16-4 4-4-4"></path>
-            <path d="M17 20V4"></path>
-            <path d="m3 8 4-4 4 4"></path>
-            <path d="M7 4v16"></path></svg
-          ><span style="pointer-events: none">Time</span
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            class="lucide lucide-chevron-down size-4 opacity-50"
-            aria-hidden="true"
-          >
-            <path d="m6 9 6 6 6-6"></path>
-          </svg>
-        </button>
-      </div>
+          {{ league }}
+        </option>
+      </select>
+      <select
+        :value="sortBy"
+        @change="store.setSortBy(($event.target as HTMLSelectElement).value as SortBy)"
+        class="p-2 border bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 rounded-md"
+      >
+        <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+          Sortiraj po: {{ option.label }}
+        </option>
+      </select>
     </div>
     <div class="flex gap-2 mt-4">
       <button class="px-4 py-2 rounded-lg transition-colors bg-emerald-600 text-white">All</button

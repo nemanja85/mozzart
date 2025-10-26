@@ -1,41 +1,50 @@
 <script setup lang="ts">
 import { matchesData } from '@/api'
+// PAŽNJA: Koristim Vaš uvoz '@/stores/app'
+import { useMatchesStore } from '@/stores/app'
 import type { MatchesProps } from '@/types'
+import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import FilterSearch from './FilterSearch.vue'
 
-const matches = ref<MatchesProps[] | null>([])
-const isLoading = ref(true)
-const error = ref(null)
+const store = useMatchesStore()
+const { filteredMatches } = storeToRefs(store)
 
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 let pollingInterval: number | undefined = undefined
 
 const updatedMatches = reactive<Record<string, boolean>>({})
 const removedMatches = reactive<Record<string, boolean>>({})
 
+function isError(err: unknown): err is Error {
+  return err instanceof Error
+}
+
 const getMatches = async () => {
-  if (!matches.value?.length) {
+  if (!store.allMatches.length) {
     isLoading.value = true
   }
   error.value = null
 
-  const oldMatches = matches.value
+  const oldMatches = store.allMatches
+
   try {
     const data = await matchesData()
-    const newMatches = data?.matches || []
+    const newMatches: MatchesProps[] = data?.matches || []
 
     if (!newMatches.length && !oldMatches?.length) {
-      matches.value = []
+      store.setMatches([])
       return
     }
 
-    const newMatch = newMatches.map((match) => match.id)
+    const newMatchIds = newMatches.map((match) => match.id)
     oldMatches?.forEach((oldMatch) => {
-      if (!newMatch.includes(oldMatch.id)) {
+      if (!newMatchIds.includes(oldMatch.id)) {
         removedMatches[oldMatch.id] = true
 
         setTimeout(() => {
-          matches.value = matches.value?.filter((match) => match.id !== oldMatch.id) || []
+          store.setMatches(store.allMatches.filter((m) => m.id !== oldMatch.id))
           delete removedMatches[oldMatch.id]
         }, 1000)
       }
@@ -54,7 +63,7 @@ const getMatches = async () => {
       }
     })
 
-    matches.value = newMatches
+    store.setMatches(newMatches)
 
     matchesToUpdate.forEach((m) => {
       updatedMatches[m.id] = true
@@ -64,7 +73,8 @@ const getMatches = async () => {
       }, 1000)
     })
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Došlo je do greške'
+    const errorMessage = isError(err) ? err.message : 'Došlo je do greške'
+    error.value = errorMessage
   } finally {
     isLoading.value = false
   }
@@ -95,20 +105,23 @@ onUnmounted(() => {
     </div>
 
     <div v-else-if="isLoading" class="text-center p-8 text-slate-400">
-      Učitavanje mečeva...
+      Učitavanje svih utakmica...
       <div class="mt-8 animate-pulse h-12 bg-slate-800 rounded-lg"></div>
     </div>
-    <div v-else-if="!matches || matches.length === 0" class="text-center p-8 text-slate-400">
-      Nema dostupnih mečeva !
+    <div
+      v-else-if="!filteredMatches || filteredMatches.length === 0"
+      class="text-center p-8 text-slate-400"
+    >
+      Nema dostupnih utakmica !
     </div>
-    <div v-if="matches" class="space-y-6">
+    <div v-if="filteredMatches" class="space-y-6">
       <div
-        v-for="match in matches"
+        v-for="match in filteredMatches"
         :key="match.id"
         class="flex flex-col gap-6 rounded-xl border bg-slate-900 border-slate-800 overflow-hidden hover:border-slate-700 transition-colors"
         :class="{
           ' border-red-500 animate-pulse-fade-out': removedMatches[match.id],
-          'bg-green-500 border-yellow-500 animate-pulse-fade-in': updatedMatches[match.id],
+          ' border-yellow-500 animate-pulse-fade-in': updatedMatches[match.id],
           'bg-slate-900 border-slate-800 hover:border-slate-700 animate-duration-100':
             !updatedMatches[match.id] && !removedMatches[match.id],
         }"
@@ -130,10 +143,22 @@ onUnmounted(() => {
                   'bg-slate-600 hover:bg-slate-600': match.status === 'finished',
                 }"
                 >{{ match.status }}</span
-              ><span v-if="match.status === 'live'" class="text-emerald-500 text-sm">75'</span>
+              ><span
+                v-if="match.status === 'live' && match.sport === 'football'"
+                class="text-emerald-500 text-sm"
+                >75'</span
+              >
+              <span
+                v-if="match.status === 'live' && match.sport === 'basketball'"
+                class="text-emerald-500 text-sm"
+                >Q3 08:51</span
+              >
             </div>
-            <div class="flex items-center gap-3">
-              <div class="flex items-center gap-2 text-slate-400">
+            <div class="flex items-center gap-2">
+              <div
+                class="flex items-center gap-2 cursor-pointer group"
+                @click="store.setFavoriteMatch(match.id)"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -144,38 +169,19 @@ onUnmounted(() => {
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  class="lucide lucide-clock h-4 w-4"
+                  class="lucide lucide-star h-4 w-4 transition-colors text-slate-600 group-hover:text-slate-400"
+                  :class="{
+                    'text-yellow-400 fill-yellow-400': store.favoriteMatch.includes(match.id),
+                    'text-slate-600 group-hover:text-slate-400': !store.favoriteMatch.includes(
+                      match.id,
+                    ),
+                  }"
                   aria-hidden="true"
                 >
-                  <path d="M12 6v6l4 2"></path>
-                  <circle cx="12" cy="12" r="10"></circle></svg
-                ><span class="text-sm">{{
-                  new Date(match.lastUpdated).toLocaleTimeString(undefined, {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="flex items-center gap-2 cursor-pointer group">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-star h-4 w-4 transition-colors text-slate-600 group-hover:text-slate-400"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
-                    ></path>
-                  </svg>
-                </div>
+                  <path
+                    d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+                  ></path>
+                </svg>
               </div>
             </div>
           </div>

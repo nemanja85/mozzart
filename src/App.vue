@@ -4,9 +4,9 @@ import Nav from './components/Nav.vue'
 </script>
 
 <template>
-  <div class="bg-slate-950 h-screen">
+  <div class="h-auto bg-slate-950 overflow-auto">
     <Nav />
-    <section class="max-w-6xl mx-auto px-4 py-6">
+    <section class="max-w-6xl mx-auto px-4 py-6 bg-slate-950">
       <GameCard />
     </section>
   </div>
