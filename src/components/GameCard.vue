@@ -1,89 +1,77 @@
 <script setup lang="ts">
-import { matchesData } from '@/api'
 import { useMatchesStore } from '@/stores/app'
 import type { MatchesProps } from '@/types'
-import { onMounted, onUnmounted, reactive, ref } from '@vue/runtime-core'
+import { onMounted, onUnmounted, reactive } from '@vue/runtime-core'
 import { storeToRefs } from 'pinia'
 import FilterSearch from './FilterSearch.vue'
 
 const store = useMatchesStore()
-const { filteredMatches } = storeToRefs(store)
+const { filteredMatches, isLoading, error, allMatches } = storeToRefs(store)
 
-const isLoading = ref(true)
-const error = ref<string | null>(null)
 let pollingInterval: number | undefined = undefined
 
 const updatedMatches = reactive<Record<string, boolean>>({})
 const removedMatches = reactive<Record<string, boolean>>({})
 
-function isError(err: unknown): err is Error {
-  return err instanceof Error
-}
+const compareMatches = (newMatches: MatchesProps[]) => {
+  const oldMatches = allMatches.value
 
-const getMatches = async () => {
-  if (!store.allMatches.length) {
-    isLoading.value = true
+  if (!newMatches.length && !oldMatches.length) {
+    store.setMatches([])
+    return
   }
-  error.value = null
 
-  const oldMatches = store.allMatches
-
-  try {
-    const data = await matchesData()
-    const newMatches: MatchesProps[] = data?.matches || []
-
-    if (!newMatches.length && !oldMatches?.length) {
-      store.setMatches([])
-      return
-    }
-
-    const newMatchIds = newMatches.map((match) => match.id)
-    oldMatches?.forEach((oldMatch) => {
-      if (!newMatchIds.includes(oldMatch.id)) {
-        removedMatches[oldMatch.id] = true
-        let intervalDuration = 1000
-
-        setTimeout(() => {
-          store.setMatches(store.allMatches.filter((m) => m.id !== oldMatch.id))
-          delete removedMatches[oldMatch.id]
-        }, intervalDuration)
-      }
-    })
-
-    const matchesToUpdate: MatchesProps[] = []
-
-    newMatches.forEach((newMatch) => {
-      const oldMatch = oldMatches?.find((item) => item.id === newMatch.id)
-
-      if (
-        oldMatch &&
-        (oldMatch.homeScore !== newMatch.homeScore || oldMatch.awayScore !== newMatch.awayScore)
-      ) {
-        matchesToUpdate.push(newMatch)
-      }
-    })
-
-    store.setMatches(newMatches)
-
-    matchesToUpdate.forEach((match) => {
-      updatedMatches[match.id] = true
+  const newMatch = newMatches.map((match) => match.id)
+  oldMatches?.forEach((oldMatch) => {
+    if (!newMatch.includes(oldMatch.id)) {
+      removedMatches[oldMatch.id] = true
       let intervalDuration = 1000
 
       setTimeout(() => {
-        delete updatedMatches[match.id]
+        store.setMatches(store.allMatches.filter((m) => m.id !== oldMatch.id))
+        delete removedMatches[oldMatch.id]
       }, intervalDuration)
-    })
-  } catch (err) {
-    const errorMessage = isError(err) ? err.message : 'Došlo je do greške'
-    error.value = errorMessage
-  } finally {
-    isLoading.value = false
+    }
+  })
+
+  const matchesToUpdate: MatchesProps[] = []
+  newMatches.forEach((newMatch) => {
+    const oldMatch = oldMatches?.find((item) => item.id === newMatch.id)
+
+    if (
+      oldMatch &&
+      (oldMatch.homeScore !== newMatch.homeScore || oldMatch.awayScore !== newMatch.awayScore)
+    ) {
+      matchesToUpdate.push(newMatch)
+    }
+  })
+
+  store.setMatches(newMatches)
+
+  matchesToUpdate.forEach((match) => {
+    updatedMatches[match.id] = true
+    let intervalDuration = 1000
+
+    setTimeout(() => {
+      delete updatedMatches[match.id]
+    }, intervalDuration)
+  })
+}
+
+const getMatches = async () => {
+  try {
+    const newMatches = await store.getLatestData()
+    if (newMatches) {
+      compareMatches(newMatches)
+    }
+  } catch (e) {
+    console.error('Greška tokom obrade utakmica', e)
   }
 }
 
 const startPolling = () => {
   let intervalDuration = 5000
-  getMatches()
+  //getMatches()
   pollingInterval = setInterval(getMatches, intervalDuration) as number
 }
 
@@ -102,12 +90,13 @@ onUnmounted(() => {
   <FilterSearch />
   <div class="space-y-2">
     <div v-if="error" class="p-4 bg-red-800 text-white text-center rounded-lg animate-fade-in">
-      {{ error }}
+      Greška pri učitavanju podataka: {{ error }}
     </div>
     <div v-else-if="isLoading" class="text-center p-8 text-slate-400">
       Učitavanje svih utakmica...
       <div class="mt-8 animate-pulse h-12 bg-slate-800 rounded-lg"></div>
     </div>
+
     <div
       v-else-if="!filteredMatches || filteredMatches.length === 0"
       class="text-center p-8 text-slate-400"
@@ -118,10 +107,10 @@ onUnmounted(() => {
       <div
         v-for="match in filteredMatches"
         :key="match.id"
-        class="flex flex-col gap-6 rounded-xl border bg-slate-900 border-slate-800 overflow-hidden hover:border-slate-700 transition-colors"
+        class="flex flex-col gap-6 rounded-xl border overflow-hidden transition-colors"
         :class="{
-          ' border-red-500 animate-bounce-fade-in': removedMatches[match.id],
-          ' border-yellow-500 animate-bounce-fade-in': updatedMatches[match.id],
+          ' border-red-500 bg-red-900/50 animate-bounce-fade-in': removedMatches[match.id],
+          ' border-yellow-500 bg-yellow-900/50 animate-bounce-fade-in': updatedMatches[match.id],
           'bg-slate-900 border-slate-800 hover:border-slate-700 animate-duration-100':
             !updatedMatches[match.id] && !removedMatches[match.id],
         }"

@@ -1,5 +1,10 @@
+import { matchesData } from '@/api'; // Pretpostavljeni import
 import type { MatchesProps } from '@/types';
 import { defineStore } from 'pinia';
+
+function isError(err: unknown): err is Error {
+  return err instanceof Error;
+}
 
 export type SortBy = 'time' | 'alphabetical' | 'default';
 type SortComparator = (a: MatchesProps, b: MatchesProps) => number;
@@ -10,6 +15,8 @@ type MatchesStateProps = {
   searchTerm: string;
   selectedLeague: string;
   sortBy: SortBy;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const sortComparators: Record<string, SortComparator> = {
@@ -31,6 +38,8 @@ export const useMatchesStore = defineStore('matches', {
     searchTerm: '',
     selectedLeague: 'all',
     sortBy: 'default',
+    isLoading: true,
+    error: null,
   }),
 
   actions: {
@@ -56,6 +65,28 @@ export const useMatchesStore = defineStore('matches', {
         this.favoriteMatch.push(matchId);
       }
     },
+
+    async getLatestData(): Promise<MatchesProps[]> {
+
+      if (!this.allMatches.length) {
+        this.isLoading = true;
+      }
+      this.error = null;
+
+      try {
+        const data = await matchesData();
+        const newMatches: MatchesProps[] = data?.matches || [];
+
+        this.error = null;
+        return newMatches;
+      } catch (err) {
+        const errorMessage = isError(err) ? err.message : 'Greška pri preuzimanju podataka.';
+        this.error = errorMessage;
+        return [];
+      } finally {
+        this.isLoading = false;
+      }
+    }
   },
 
   getters: {
