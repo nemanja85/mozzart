@@ -1,7 +1,7 @@
 import type { MatchesProps } from '@/types';
 import { defineStore } from 'pinia';
 
-export type SortBy = 'time' | 'alphabetical' | 'score' | 'default';
+export type SortBy = 'time' | 'alphabetical' | 'default';
 type SortComparator = (a: MatchesProps, b: MatchesProps) => number;
 
 type MatchesStateProps = {
@@ -22,12 +22,6 @@ const sortComparators: Record<string, SortComparator> = {
   alphabetical: (a, b) => {
     return a.homeTeam.localeCompare(b.homeTeam);
   },
-
-  score: (a, b) => {
-    const scoreA = (a.homeScore || 0) + (a.awayScore || 0);
-    const scoreB = (b.homeScore || 0) + (b.awayScore || 0);
-    return scoreB - scoreA;
-  }
 };
 
 export const useMatchesStore = defineStore('matches', {
@@ -97,8 +91,8 @@ export const useMatchesStore = defineStore('matches', {
     },
 
     availableLeagues: (state) => {
-      const leagues = new Set(state.allMatches.map(m => m.league));
-      return ['all', ...Array.from(leagues)].filter(l => l);
+      const leagues = new Set(state.allMatches.map(match => match.league));
+      return ['all', ...Array.from(leagues)].filter(leagues => leagues);
     }
   }
 });

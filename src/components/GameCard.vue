@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { matchesData } from '@/api'
-// PAŽNJA: Koristim Vaš uvoz '@/stores/app'
 import { useMatchesStore } from '@/stores/app'
 import type { MatchesProps } from '@/types'
+import { onMounted, onUnmounted, reactive, ref } from '@vue/runtime-core'
 import { storeToRefs } from 'pinia'
-import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import FilterSearch from './FilterSearch.vue'
 
 const store = useMatchesStore()
@@ -42,11 +41,12 @@ const getMatches = async () => {
     oldMatches?.forEach((oldMatch) => {
       if (!newMatchIds.includes(oldMatch.id)) {
         removedMatches[oldMatch.id] = true
+        let intervalDuration = 1000
 
         setTimeout(() => {
           store.setMatches(store.allMatches.filter((m) => m.id !== oldMatch.id))
           delete removedMatches[oldMatch.id]
-        }, 1000)
+        }, intervalDuration)
       }
     })
 
@@ -65,12 +65,13 @@ const getMatches = async () => {
 
     store.setMatches(newMatches)
 
-    matchesToUpdate.forEach((m) => {
-      updatedMatches[m.id] = true
+    matchesToUpdate.forEach((match) => {
+      updatedMatches[match.id] = true
+      let intervalDuration = 1000
 
       setTimeout(() => {
-        delete updatedMatches[m.id]
-      }, 1000)
+        delete updatedMatches[match.id]
+      }, intervalDuration)
     })
   } catch (err) {
     const errorMessage = isError(err) ? err.message : 'Došlo je do greške'
@@ -81,7 +82,7 @@ const getMatches = async () => {
 }
 
 const startPolling = () => {
-  const intervalDuration = 5000
+  let intervalDuration = 5000
   getMatches()
   pollingInterval = setInterval(getMatches, intervalDuration) as number
 }
@@ -98,12 +99,11 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <FilterSearch />
   <div class="space-y-2">
-    <FilterSearch />
-    <div v-if="error" class="p-4 bg-red-800 text-white rounded-lg">
-      Greška prilikom učitavanja: {{ error }}
+    <div v-if="error" class="p-4 bg-red-800 text-white text-center rounded-lg animate-fade-in">
+      {{ error }}
     </div>
-
     <div v-else-if="isLoading" class="text-center p-8 text-slate-400">
       Učitavanje svih utakmica...
       <div class="mt-8 animate-pulse h-12 bg-slate-800 rounded-lg"></div>
@@ -114,14 +114,14 @@ onUnmounted(() => {
     >
       Nema dostupnih utakmica !
     </div>
-    <div v-if="filteredMatches" class="space-y-6">
+    <div v-else class="space-y-6">
       <div
         v-for="match in filteredMatches"
         :key="match.id"
         class="flex flex-col gap-6 rounded-xl border bg-slate-900 border-slate-800 overflow-hidden hover:border-slate-700 transition-colors"
         :class="{
-          ' border-red-500 animate-pulse-fade-out': removedMatches[match.id],
-          ' border-yellow-500 animate-pulse-fade-in': updatedMatches[match.id],
+          ' border-red-500 animate-bounce-fade-in': removedMatches[match.id],
+          ' border-yellow-500 animate-bounce-fade-in': updatedMatches[match.id],
           'bg-slate-900 border-slate-800 hover:border-slate-700 animate-duration-100':
             !updatedMatches[match.id] && !removedMatches[match.id],
         }"
@@ -130,7 +130,7 @@ onUnmounted(() => {
           <div class="flex items-start justify-between mb-4">
             <div class="flex items-center gap-2 flex-1">
               <span v-if="match.sport === 'football'" class="text-xl">⚽</span>
-              <span v-if="match.sport === 'basketball'" class="text-xl">>🏀</span>
+              <span v-if="match.sport === 'basketball'" class="text-xl">🏀</span>
               <span v-if="match.sport === 'tennis'" class="text-xl">🎾</span
               ><span
                 class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden border-transparent bg-slate-800 text-slate-300 hover:bg-slate-800"

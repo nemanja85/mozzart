@@ -8,7 +8,7 @@
           <span class="text-white">Mozzartbet</span>
         </div>
         <nav class="hidden lg:flex items-center gap-6">
-          <a href="#" class="text-white hover:text-emerald-400 transition-colors">Sports</a
+          <a href="/" class="text-white hover:text-emerald-400 transition-colors">Sports</a
           ><a href="#" class="text-slate-400 hover:text-white transition-colors">Live</a
           ><a href="#" class="text-slate-400 hover:text-white transition-colors">Casino</a
           ><a href="#" class="text-slate-400 hover:text-white transition-colors">Promotions</a>

@@ -65,21 +65,5 @@ const sortOptions: { value: SortBy; label: string }[] = [
         </option>
       </select>
     </div>
-    <div class="flex gap-2 mt-4">
-      <button class="px-4 py-2 rounded-lg transition-colors bg-emerald-600 text-white">All</button
-      ><button
-        class="px-4 py-2 rounded-lg transition-colors bg-slate-800 text-slate-400 hover:bg-slate-700"
-      >
-        Live</button
-      ><button
-        class="px-4 py-2 rounded-lg transition-colors bg-slate-800 text-slate-400 hover:bg-slate-700"
-      >
-        Upcoming</button
-      ><button
-        class="px-4 py-2 rounded-lg transition-colors bg-slate-800 text-slate-400 hover:bg-slate-700"
-      >
-        Finished
-      </button>
-    </div>
   </div>
 </template>
