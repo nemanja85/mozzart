@@ -29,9 +29,3 @@ export const matchesData = async (): Promise<MatchesResponse | null> => {
   return data;
 };
 
-/*export const useMatches = () => {
-  return useQuery<MatchesResponse, Error>(
-    ['matches'],
-    matchesData,
-  );
-};*/

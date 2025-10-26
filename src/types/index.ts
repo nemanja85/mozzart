@@ -9,11 +9,11 @@ export type MatchesProps = {
   homeScore: number,
   awayScore: number,
   status: statusOptions,
-  matchTime: string,
+  matchTime: Date,
   league: string,
   venue: string,
   source: string,
-  lastUpdated: string
+  lastUpdated: Date
 }
 
 export type MatchesResponse = {
