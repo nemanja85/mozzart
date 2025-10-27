@@ -1,7 +1,10 @@
-import { matchesData } from '@/api'; // Pretpostavljeni import
+import { matchesData } from '@/api';
 import type { MatchesProps } from '@/types';
 import { defineStore } from 'pinia';
 
+function delay(milliseconds: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
 function isError(err: unknown): err is Error {
   return err instanceof Error;
 }
@@ -67,25 +70,46 @@ export const useMatchesStore = defineStore('matches', {
     },
 
     async getLatestData(): Promise<MatchesProps[]> {
+      const MAX_RETRIES = 3;
 
       if (!this.allMatches.length) {
         this.isLoading = true;
       }
       this.error = null;
 
-      try {
-        const data = await matchesData();
-        const newMatches: MatchesProps[] = data?.matches || [];
 
-        this.error = null;
-        return newMatches;
-      } catch (err) {
-        const errorMessage = isError(err) ? err.message : 'Greška pri preuzimanju podataka.';
-        this.error = errorMessage;
-        return [];
-      } finally {
-        this.isLoading = false;
-      }
+      const fetchDataWithRetry = async (attempt: number = 1): Promise<MatchesProps[]> => {
+        try {
+          const data = await matchesData();
+          const newMatches: MatchesProps[] = data?.matches || [];
+          this.error = null;
+          this.isLoading = false;
+          return newMatches;
+
+        } catch (err) {
+          console.warn(`Preuzimanja podataka nakon #${attempt} nije uspeo.`);
+
+          if (attempt < MAX_RETRIES) {
+
+            const delayTime = Math.pow(2, attempt - 1) * 1000;
+            await delay(delayTime);
+
+            return fetchDataWithRetry(attempt + 1);
+
+          } else {
+
+            const errorMessage = isError(err)
+              ? err.message
+              : 'Preuzimanje podataka nije uspelo nakon maksimalnog broja pokušaja (3)!';
+
+            this.error = errorMessage;
+            this.isLoading = false;
+            return [];
+          }
+        }
+      };
+
+      return fetchDataWithRetry();
     }
   },
 

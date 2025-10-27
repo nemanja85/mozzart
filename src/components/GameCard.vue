@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMatchesStore } from '@/stores/app'
 import type { MatchesProps } from '@/types'
-import { onMounted, onUnmounted, reactive } from '@vue/runtime-core'
+import { onMounted, onUnmounted, reactive, watch } from '@vue/runtime-core'
 import { storeToRefs } from 'pinia'
 import FilterSearch from './FilterSearch.vue'
 import GameItem from './GameItem.vue'
@@ -82,10 +82,15 @@ onUnmounted(() => {
     clearInterval(pollingInterval)
   }
 })
+
+watch(error, (newError) => {
+  if (newError && pollingInterval) {
+    clearInterval(pollingInterval)
+  }
+})
 </script>
 
 <template>
-  <FilterSearch />
   <div class="space-y-2">
     <div v-if="error" class="p-4 bg-red-800 text-white text-center rounded-lg animate-fade-in">
       {{ error }}
@@ -94,13 +99,14 @@ onUnmounted(() => {
       Učitavanje svih utakmica...
       <div class="mt-8 animate-pulse h-12 bg-slate-800 rounded-lg"></div>
     </div>
-    <div
-      v-else-if="!filteredMatches || filteredMatches.length === 0"
-      class="text-center p-8 text-slate-400"
-    >
-      Nema dostupnih utakmica !
-    </div>
     <div v-else class="space-y-6">
+      <FilterSearch />
+      <div
+        v-if="!filteredMatches || filteredMatches.length === 0"
+        class="text-center p-8 text-slate-400"
+      >
+        Nema dostupnih utakmica !
+      </div>
       <GameItem
         v-for="match in filteredMatches"
         :key="match.id"

@@ -7,7 +7,6 @@ const matches = ref<MatchesProps[]>([]);
 
 
 export const matchesData = async (): Promise<MatchesResponse | null> => {
-  //`${import.meta.env.VITE_APP_API_URL as string}/matches`)
 
   const response = await fetch(apiUrl, {
     method: 'GET',

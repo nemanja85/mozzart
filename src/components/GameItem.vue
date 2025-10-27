@@ -54,7 +54,7 @@ const isFavorite = computed(() => favoriteMatch.value.includes(props.match.id))
           <span
             v-if="props.match.status === 'live' && props.match.sport === 'basketball'"
             class="text-emerald-500 text-sm"
-            >Q3 08:51</span
+            >Q3 7:51</span
           >
         </div>
         <div class="flex items-center gap-2">
