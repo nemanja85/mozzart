@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMatchesStore } from '@/stores/app'
 import type { MatchesProps } from '@/types'
-import { computed } from '@vue/runtime-core'
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
 const store = useMatchesStore()

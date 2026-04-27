@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMatchesStore } from '@/stores/app'
 import type { MatchesProps } from '@/types'
-import { onMounted, onUnmounted, reactive, watch } from '@vue/runtime-core'
+import { onMounted, onUnmounted, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import FilterSearch from './FilterSearch.vue'
 import GameItem from './GameItem.vue'
@@ -27,7 +27,7 @@ const setMatches = (newMatches: MatchesProps[]) => {
   oldMatches?.forEach((oldMatch) => {
     if (!newMatchIds.includes(oldMatch.id)) {
       removedMatches[oldMatch.id] = true
-      let intervalDuration = 1000
+      const intervalDuration = 1000
 
       setTimeout(() => {
         store.setMatches(store.allMatches.filter((match) => match.id !== oldMatch.id))
@@ -52,7 +52,7 @@ const setMatches = (newMatches: MatchesProps[]) => {
 
   matchesToUpdate.forEach((match) => {
     updatedMatches[match.id] = true
-    let intervalDuration = 1000
+    const intervalDuration = 1000
 
     setTimeout(() => {
       delete updatedMatches[match.id]
@@ -68,7 +68,7 @@ const getMatches = async () => {
 }
 
 const startPolling = () => {
-  let intervalDuration = 5000
+  const intervalDuration = 5000
   getMatches()
   pollingInterval = setInterval(getMatches, intervalDuration) as number
 }

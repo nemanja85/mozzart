@@ -1,5 +1,5 @@
 import type { MatchesProps, MatchesResponse } from "@/types";
-import { ref } from '@vue/runtime-core';
+import { ref } from 'vue';
 
 const apiUrl = 'http://172.235.235.11/api/matches';
 const username = `mitic.nemanja@hotmail.com`

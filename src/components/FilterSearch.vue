@@ -46,14 +46,11 @@ const sortOptions: { value: SortBy; label: string }[] = [
         class="p-2 border bg-slate-800 border-slate-700 placeholder:text-slate-500 text-white rounded-md"
       >
         <option value="all">Odaberi Ligu</option>
-        <option
-          v-for="league in availableLeagues"
-          :key="league"
-          :value="league"
-          v-if="league !== 'all'"
-        >
-          {{ league }}
-        </option>
+        <template v-for="league in availableLeagues" :key="league">
+          <option v-if="league !== 'all'" :value="league">
+            {{ league }}
+          </option>
+        </template>
       </select>
       <select
         :value="sortBy"
