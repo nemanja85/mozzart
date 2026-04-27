@@ -16,7 +16,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@midudev/tailwind-animations": "^0.2.0",
+    "@midudev/tailwind-animations": "^1.0.1",
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/vue-query": "^5.90.5",
     "pinia": "^3.0.3",
