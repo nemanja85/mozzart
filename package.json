@@ -18,7 +18,7 @@
   "dependencies": {
     "@midudev/tailwind-animations": "^1.0.1",
     "@tailwindcss/vite": "^4.2.4",
-    "@tanstack/vue-query": "^5.90.5",
+    "@tanstack/vue-query": "^5.100.6",
     "pinia": "^3.0.3",
     "tailwindcss": "^4.2.4",
     "vue": "^3.5.23"
