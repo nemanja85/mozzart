@@ -16,7 +16,5 @@ export type MatchesProps = {
   lastUpdated: Date
 }
 
-export type MatchesResponse = {
-  matches: MatchesProps[]
-  success: boolean
-}
+export type MatchesResponse =
+  { success: true; matches: Match[] } | { success: false; error: string }

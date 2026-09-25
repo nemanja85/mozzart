@@ -124,7 +124,6 @@ export const useMatchesStore = defineStore('matches', {
         )
       }
 
-      // Put favorite matches on top
       result.sort((a, b) => {
         const aIsFavorite = state.favoriteMatch.includes(a.id) ? 1 : 0
         const bIsFavorite = state.favoriteMatch.includes(b.id) ? 1 : 0
