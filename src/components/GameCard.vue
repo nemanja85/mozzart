@@ -1,63 +1,66 @@
 <script setup lang="ts">
-import { useMatchesStore } from '@/stores/app'
-import type { MatchesProps } from '@/types'
 import { onMounted, onUnmounted, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useMatchesStore } from '@/stores/app'
+import type { MatchesProps } from '@/types'
 import FilterSearch from './FilterSearch.vue'
 import GameItem from './GameItem.vue'
 
-const store = useMatchesStore()
+const POLLING_INTERVAL_MS = 5000
+const ANIMATION_DURATION_MS = 1000
 
+const store = useMatchesStore()
 const { filteredMatches, isLoading, error, allMatches } = storeToRefs(store)
 
-let pollingInterval: number | undefined = undefined
+let pollingInterval: ReturnType<typeof setInterval> | undefined
 
 const updatedMatches = reactive<Record<string, boolean>>({})
 const removedMatches = reactive<Record<string, boolean>>({})
 
+const markAsRemoved = (matchId: string) => {
+  removedMatches[matchId] = true
+
+  setTimeout(() => {
+    store.setMatches(store.allMatches.filter((match) => match.id !== matchId))
+    delete removedMatches[matchId]
+  }, ANIMATION_DURATION_MS)
+}
+
+const markAsUpdated = (matchId: string) => {
+  updatedMatches[matchId] = true
+
+  setTimeout(() => {
+    delete updatedMatches[matchId]
+  }, ANIMATION_DURATION_MS)
+}
+
 const setMatches = (newMatches: MatchesProps[]) => {
-  const oldMatches = allMatches.value
+  const oldMatches = allMatches.value ?? []
 
   if (!newMatches.length && !oldMatches.length) {
     store.setMatches([])
     return
   }
 
-  const newMatchIds = newMatches.map((match) => match.id)
-  oldMatches?.forEach((oldMatch) => {
-    if (!newMatchIds.includes(oldMatch.id)) {
-      removedMatches[oldMatch.id] = true
-      const intervalDuration = 1000
+  const newMatchIds = new Set(newMatches.map((m) => m.id))
 
-      setTimeout(() => {
-        store.setMatches(store.allMatches.filter((match) => match.id !== oldMatch.id))
-        delete removedMatches[oldMatch.id]
-      }, intervalDuration)
+  oldMatches.forEach((oldMatch) => {
+    if (!newMatchIds.has(oldMatch.id)) {
+      markAsRemoved(oldMatch.id)
     }
   })
 
-  const matchesToUpdate: MatchesProps[] = []
-  newMatches.forEach((newMatch) => {
-    const oldMatch = oldMatches?.find((item) => item.id === newMatch.id)
-
-    if (
+  const matchesToUpdate = newMatches.filter((newMatch) => {
+    const oldMatch = oldMatches.find((m) => m.id === newMatch.id)
+    return (
       oldMatch &&
       (oldMatch.homeScore !== newMatch.homeScore || oldMatch.awayScore !== newMatch.awayScore)
-    ) {
-      matchesToUpdate.push(newMatch)
-    }
+    )
   })
 
   store.setMatches(newMatches)
 
-  matchesToUpdate.forEach((match) => {
-    updatedMatches[match.id] = true
-    const intervalDuration = 1000
-
-    setTimeout(() => {
-      delete updatedMatches[match.id]
-    }, intervalDuration)
-  })
+  matchesToUpdate.forEach((match) => markAsUpdated(match.id))
 }
 
 const getMatches = async () => {
@@ -68,51 +71,59 @@ const getMatches = async () => {
 }
 
 const startPolling = () => {
-  const intervalDuration = 5000
   getMatches()
-  pollingInterval = setInterval(getMatches, intervalDuration) as number
+  pollingInterval = setInterval(getMatches, POLLING_INTERVAL_MS)
 }
 
-onMounted(() => {
-  startPolling()
-})
-
-onUnmounted(() => {
+const stopPolling = () => {
   if (pollingInterval) {
     clearInterval(pollingInterval)
+    pollingInterval = undefined
   }
-})
+}
+
+onMounted(startPolling)
+onUnmounted(stopPolling)
 
 watch(error, (newError) => {
-  if (newError && pollingInterval) {
-    clearInterval(pollingInterval)
+  if (newError) {
+    stopPolling()
   }
 })
 </script>
 
 <template>
   <div class="space-y-2">
-    <div v-if="error" class="p-4 bg-red-800 text-white text-center rounded-lg animate-fade-in">
+    <div
+      v-if="error"
+      class="p-4 bg-red-800 text-white text-center rounded-lg animate-fade-in"
+      role="alert"
+    >
       {{ error }}
     </div>
-    <div v-else-if="isLoading" class="text-center p-8 text-slate-400">
+
+    <div v-else-if="isLoading" class="text-center p-8 text-slate-400" aria-live="polite">
       Učitavanje svih utakmica...
       <div class="mt-8 animate-pulse h-12 bg-slate-800 rounded-lg"></div>
     </div>
+
     <div v-else class="space-y-6">
       <FilterSearch />
+
       <div
-        v-if="!filteredMatches || filteredMatches.length === 0"
+        v-if="!filteredMatches?.length"
         class="text-center p-8 text-slate-400"
+        aria-live="polite"
       >
-        Nema dostupnih utakmica !
+        Nema dostupnih utakmica!
       </div>
+
       <GameItem
         v-for="match in filteredMatches"
         :key="match.id"
         :match="match"
-        :updatedMatches="updatedMatches"
-        :removedMatches="removedMatches"
+        :updated-matches="updatedMatches"
+        :removed-matches="removedMatches"
       />
     </div>
   </div>

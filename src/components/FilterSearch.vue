@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import { useMatchesStore, type SortBy } from '@/stores/app';
-import { storeToRefs } from 'pinia';
+import { useMatchesStore, type SortBy } from '@/stores/app'
+import { storeToRefs } from 'pinia'
 
-const store = useMatchesStore();
-const { searchTerm, selectedLeague, sortBy, availableLeagues } = storeToRefs(store);
+const store = useMatchesStore()
+const { searchTerm, selectedLeague, sortBy, availableLeagues } = storeToRefs(store)
 
 const sortOptions: { value: SortBy; label: string }[] = [
   { value: 'default', label: 'Podrazumevano' },
   { value: 'time', label: 'Vremenu' },
   { value: 'alphabetical', label: 'Timu' },
-];
+]
 
 const handleSearchInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  store.setSearchTerm(target.value);
-};
+  const target = event.target as HTMLInputElement
+  store.setSearchTerm(target.value)
+}
 
 const handleLeagueChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement;
-  store.setSelectedLeague(target.value);
-};
+  const target = event.target as HTMLSelectElement
+  store.setSelectedLeague(target.value)
+}
 
 const handleSortChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement;
-  store.setSortBy(target.value as SortBy);
-};
+  const target = event.target as HTMLSelectElement
+  store.setSortBy(target.value as SortBy)
+}
 </script>
 
 <template>
