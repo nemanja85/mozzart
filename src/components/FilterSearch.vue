@@ -1,15 +1,30 @@
 <script setup lang="ts">
-import { useMatchesStore, type SortBy } from '@/stores/app'
-import { storeToRefs } from 'pinia'
+import { useMatchesStore, type SortBy } from '@/stores/app';
+import { storeToRefs } from 'pinia';
 
-const store = useMatchesStore()
-const { searchTerm, selectedLeague, sortBy, availableLeagues } = storeToRefs(store)
+const store = useMatchesStore();
+const { searchTerm, selectedLeague, sortBy, availableLeagues } = storeToRefs(store);
 
 const sortOptions: { value: SortBy; label: string }[] = [
   { value: 'default', label: 'Podrazumevano' },
   { value: 'time', label: 'Vremenu' },
   { value: 'alphabetical', label: 'Timu' },
-]
+];
+
+const handleSearchInput = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  store.setSearchTerm(target.value);
+};
+
+const handleLeagueChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement;
+  store.setSelectedLeague(target.value);
+};
+
+const handleSortChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement;
+  store.setSortBy(target.value as SortBy);
+};
 </script>
 
 <template>
@@ -34,27 +49,30 @@ const sortOptions: { value: SortBy; label: string }[] = [
           <input
             type="text"
             :value="searchTerm"
-            @input="store.setSearchTerm(($event.target as HTMLInputElement).value)"
+            @input="handleSearchInput"
             placeholder="Pretraži tim..."
+            aria-label="Pretraži tim"
             class="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base transition-[color,box-shadow] outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
           />
         </div>
       </div>
+
       <select
         :value="selectedLeague"
-        @change="store.setSelectedLeague(($event.target as HTMLSelectElement).value)"
+        @change="handleLeagueChange"
+        aria-label="Odaberi ligu"
         class="p-2 border bg-slate-800 border-slate-700 placeholder:text-slate-500 text-white rounded-md"
       >
         <option value="all">Odaberi Ligu</option>
-        <template v-for="league in availableLeagues" :key="league">
-          <option v-if="league !== 'all'" :value="league">
-            {{ league }}
-          </option>
-        </template>
+        <option v-for="league in availableLeagues" :key="league" :value="league">
+          {{ league }}
+        </option>
       </select>
+
       <select
         :value="sortBy"
-        @change="store.setSortBy(($event.target as HTMLSelectElement).value as SortBy)"
+        @change="handleSortChange"
+        aria-label="Sortiraj mečeve"
         class="p-2 border bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 rounded-md"
       >
         <option v-for="option in sortOptions" :key="option.value" :value="option.value">
